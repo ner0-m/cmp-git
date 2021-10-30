@@ -40,7 +40,7 @@ local get_command = function(callback, gh_command, curl_url, handle_item)
     return command
 end
 
-M.get_pull_requests_job = function(source, callback, git_info)
+M.get_pull_requests_job = function(source, callback, git_info, config)
     return Job:new(get_command(
         callback,
         {
@@ -50,9 +50,9 @@ M.get_pull_requests_job = function(source, callback, git_info)
             "--repo",
             string.format("%s/%s", git_info.owner, git_info.repo),
             "--limit",
-            source.config.github.pull_requests.limit,
+            config.limit,
             "--state",
-            source.config.github.pull_requests.state,
+            config.state,
             "--json",
             "title,number,body",
         },
@@ -60,8 +60,8 @@ M.get_pull_requests_job = function(source, callback, git_info)
             "https://api.github.com/repos/%s/%s/pulls?state=%s&per_page=%d&page=%d",
             git_info.owner,
             git_info.repo,
-            source.config.github.pull_requests.state,
-            source.config.github.pull_requests.limit,
+            config.state,
+            config.limit,
             1
         ),
         function(pr)
@@ -83,7 +83,7 @@ M.get_pull_requests_job = function(source, callback, git_info)
     ))
 end
 
-M.get_issues_job = function(source, callback, git_info)
+M.get_issues_job = function(source, callback, git_info, config)
     return Job:new(get_command(
         callback,
         {
@@ -93,9 +93,9 @@ M.get_issues_job = function(source, callback, git_info)
             "--repo",
             string.format("%s/%s", git_info.owner, git_info.repo),
             "--limit",
-            source.config.github.issues.limit,
+            config.limit,
             "--state",
-            source.config.github.issues.state,
+            config.state,
             "--json",
             "title,number,body",
         },
@@ -103,9 +103,9 @@ M.get_issues_job = function(source, callback, git_info)
             "https://api.github.com/repos/%s/%s/issues?filter=%s&state=%s&per_page=%d&page=%d",
             git_info.owner,
             git_info.repo,
-            source.config.github.issues.filter,
-            source.config.github.issues.state,
-            source.config.github.issues.limit,
+            config.filter,
+            config.state,
+            config.limit,
             1
         ),
         function(issue)
@@ -127,7 +127,7 @@ M.get_issues_job = function(source, callback, git_info)
     ))
 end
 
-M.get_issues = function(source, callback, bufnr, git_info)
+M.get_issues = function(source, callback, bufnr, git_info, config)
     local issues_job = M.get_issues_job(source, function(args)
         if not source.cache_issues[bufnr] then
             source.cache_issues[bufnr] = {}
@@ -136,7 +136,7 @@ M.get_issues = function(source, callback, bufnr, git_info)
         for _, item in ipairs(args.items) do
             table.insert(source.cache_issues[bufnr], item)
         end
-    end, git_info)
+    end, git_info, config.issues)
 
     local pull_requests_job = M.get_pull_requests_job(source, function(args)
         if not source.cache_issues[bufnr] then
@@ -147,12 +147,12 @@ M.get_issues = function(source, callback, bufnr, git_info)
             table.insert(source.cache_issues[bufnr], item)
         end
         callback({ items = source.cache_issues[bufnr], isIncomplete = false })
-    end, git_info)
+    end, git_info, config.pull_requests)
 
     Job.chain(issues_job, pull_requests_job)
 end
 
-M.get_mentions = function(source, callback, bufnr, git_info)
+M.get_mentions = function(source, callback, bufnr, git_info, config)
     Job
         :new(get_command(
             function(args)
@@ -164,7 +164,7 @@ M.get_mentions = function(source, callback, bufnr, git_info)
                 "https://api.github.com/repos/%s/%s/contributors?per_page=%d&page=%d",
                 git_info.owner,
                 git_info.repo,
-                source.config.github.mentions.limit,
+                config.limit,
                 1
             ),
             function(mention)

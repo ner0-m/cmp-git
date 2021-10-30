@@ -52,7 +52,7 @@ function Source:complete(params, callback)
                 and git_info.owner ~= nil
                 and git_info.repo ~= nil
             then
-                github.get_issues(self, callback, bufnr, git_info)
+                github.get_issues(self, callback, bufnr, git_info, self.config.github)
             elseif
                 self.config.gitlab
                 and self.config.gitlab.issues
@@ -60,7 +60,7 @@ function Source:complete(params, callback)
                 and git_info.owner ~= nil
                 and git_info.repo ~= nil
             then
-                gitlab.get_issues(self, callback, bufnr, git_info)
+                gitlab.get_issues(self, callback, bufnr, git_info, self.config.gitlab.issues)
             else
                 callback({ items = {}, isIncomplete = false })
                 self.cache_issues[bufnr] = {}
@@ -79,7 +79,7 @@ function Source:complete(params, callback)
                 and git_info.owner ~= nil
                 and git_info.repo ~= nil
             then
-                github.get_mentions(self, callback, bufnr, git_info)
+                github.get_mentions(self, callback, bufnr, git_info, self.config.github.mentions)
             elseif
                 self.config.gitlab
                 and self.config.gitlab.mentions
@@ -87,7 +87,7 @@ function Source:complete(params, callback)
                 and git_info.owner ~= nil
                 and git_info.repo ~= nil
             then
-                gitlab.get_mentions(self, callback, bufnr, git_info)
+                gitlab.get_mentions(self, callback, bufnr, git_info, self.config.gitlab.mentions)
             else
                 callback({ items = {}, isIncomplete = false })
                 self.cache_mentions[bufnr] = {}
@@ -106,7 +106,7 @@ function Source:complete(params, callback)
                 and git_info.owner ~= nil
                 and git_info.repo ~= nil
             then
-                gitlab.get_merge_requests(self, callback, bufnr, git_info)
+                gitlab.get_merge_requests(self, callback, bufnr, git_info, self.config.gitlab.merge_requests)
             end
         else
             callback({ items = self.cache_merge_requests[bufnr], isIncomplete = false })
